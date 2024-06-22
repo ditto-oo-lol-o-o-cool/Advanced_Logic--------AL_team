@@ -1,0 +1,196 @@
+local key="ajjsjdj"
+--setreadonly(key)
+local request_checker_oodash={}
+local checker_token_a=97.17616487
+local checker_token_key=[[fMDHn6dbB=uG99CnnQZULMoW4494qnvK%C05gpplirmjUHl0YUKIeGwR_PWD6RzgZL4kj=2SRXXxqKW10TecuwsvSUcaPJ2VaP4ZZkE-nRbke6zFt1FnR-UZPL5t1waVJ4E_#aVkfVy_RQ#m909U-O#%FK=0itlTKjGsSH1UL11BpvehIczFUv14HyXAKx1b3wCvFn_0-/vi8=2ojX2+_OTGy_6NV+fzfoTyFLGfzu/-o/k_Tx%-X#Kt+FI-8hM4-iIN/0-3GY3mNR_I5JABcqpDzKE99wrmGFtIN6A-R-4Q+OGRDUx%kjCZZ2cDozGrKb6jMj8Pmbh/uf8h8B+GVp9MFZHLH3x3rlkcaid%3Vxv=Iiou3+Ugp/9zLXhddWcL6W%0RKpbOLKi%0#1-s-F2cHuKhr1uW63#N%1ZDBUQWpBgMMI#R6ikKMh+ZG9_n/h/TIVL2rY1Oksi8hdPEH1bK/wND-t+lX9_hKy/gNiDf-#ZqrQoF9NJibRGVIEgHj2P+=6nibmC-e4udH0nVXl1_V-y/3LO]]
+local checker_token_b=8.197311576619
+local checker_token_r=checker_token_a
+local checker_token_api="换成你自己的API"
+
+local function generateCirclePoints(a, b, r)
+  local points = {}
+  local angle = math.random() * 2 * math.pi
+  local x = a + r * math.cos(angle)
+  local y = b + r * math.sin(angle)
+  table.insert(points, {x=x, y=y})
+  return points
+end
+local function swap(list, i, j)
+  list[i], list[j] = list[j], list[i]
+end
+local function ksa(key)
+  local key_length = #key
+  local S = {}
+  for i = 0, 255 do
+    S[i] = i
+  end
+  local j = 0
+  for i = 0, 255 do
+    j = (j + S[i] + key:byte((i % key_length) + 1)) % 256
+    swap(S, i, j)
+  end
+  return S
+end
+local function prga(S, text)
+  local i, j, K = 0, 0, {}
+  for l = 1, #text do
+    i = (i + 1) % 256
+    j = (j + S[i]) % 256
+    swap(S, i, j)
+    K[l] = string.char(bit32.bxor(text:byte(l), S[(S[i] + S[j]) % 256]))
+  end
+  return table.concat(K)
+end
+local function RC4(key, text)
+  local S = ksa(key)
+  return prga(S, text)
+end
+local function toHex(string)
+  return (string:gsub(".", function(c)
+    return string.format("%02X", c:byte())
+  end))
+end
+local function fromHex(hex)
+  return (hex:gsub("..", function(cc)
+    return string.char(tonumber(cc, 16))
+  end))
+end
+local function encrypt(key, text)
+  local encrypted = RC4(key, text)
+  return toHex(encrypted):upper()
+end
+local function decrypt(key, encrypted_text)
+  local text = fromHex(encrypted_text)
+  return RC4(key, text)
+end
+local function encodeBase64(source_str)
+  local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  local s64 = ''
+  local str = source_str
+
+  while #str > 0 do
+    local bytes_num = 0
+    local buf = 0
+
+    for byte_cnt=1,3 do
+      buf = (buf * 256)
+      if #str > 0 then
+        buf = buf + string.byte(str, 1, 1)
+        str = string.sub(str, 2)
+        bytes_num = bytes_num + 1
+      end
+    end
+
+    for group_cnt=1,(bytes_num+1) do
+      local b64char = math.fmod(math.floor(buf/262144), 64) + 1
+      s64 = s64 .. string.sub(b64chars, b64char, b64char)
+      buf = buf * 64
+    end
+
+    for fill_cnt=1,(3-bytes_num) do
+      s64 = s64 .. '='
+    end
+  end
+
+  return s64
+end
+local function decodeBase64(encoded_str)
+  local b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  local bin = ''
+  local padding = 0
+  local decoded_str = ''
+
+  local len = #encoded_str
+  for i=len,1,-1 do
+    if encoded_str:sub(i,i) == '=' then
+      padding = padding + 1
+     else
+      break
+    end
+  end
+  encoded_str = encoded_str:sub(1,len-padding)
+
+  for i=1,#encoded_str,4 do
+    local group = encoded_str:sub(i,i+3)
+    for j=1,4 do
+      local char = group:sub(j,j)
+      if char ~= '=' then
+        local char_val = b64chars:find(char) - 1
+        bin = bin .. string.format('%06d', char_val):sub(-2)
+      end
+    end
+
+    local num = tonumber(bin, 2)
+    decoded_str = decoded_str .. string.char(math.floor(num / 256), num % 256)
+    bin = ''
+  end
+
+  -- Adjust for padding
+  decoded_str = decoded_str:sub(1, #-decoded_str - padding)
+
+  return decoded_str
+end
+function charToHex(char)
+  local fff=""
+  for i=1,#char
+    local asciiValue = string.byte(char,i)*15487397613428497
+    local fff=fff..string.format("%02X", asciiValue)
+  end
+  return fff
+end
+function hexToChars(hexStr)
+  local chars = ""
+  for i = 1, #hexStr, 2 do
+    local hexByte = hexStr:sub(i, i+1)
+    local char = string.char(tonumber(hexByte, 16)/4)
+    chars = chars .. char
+  end
+  return chars
+end
+local rightnow={}
+for oao=1,math.random(3,6) do
+  local request_ticker=tick()
+  local request_token=charToHex(encodeBase64(encrypt(checker_token_key..os.date("%Y")..os.date("%D")..os.date("%m")..os.date("%S"),key)))
+  local request_checkid=charToHex(encodeBase64(encrypt(checker_token_key,(tick()*5791).."/"..os.date("%Y")..os.date("%D")..os.date("%m"))))
+  local request_r=math.random(999,999999999)
+  local request_ringo=charToHex(encodeBase64(encrypt(checker_token_key,request_r*114514)))
+  local request_dash=request(
+  {
+    Url=checker_token_api,
+    Method="POST",
+    Headers = {
+      ["dash"]= charToHex(encodeBase64(encrypt("dashlol",generateCirclePoints(checker_token_a,checker_token_b,checker_token_r)+#key+20220222*2)))
+    },
+    Body =game:GetService("HttpService"):JSONEncode({
+      ["token"]=request_token,
+      ["signature"]=request_checkid,
+      ["check"]=request_ringo
+    })
+  }).Body
+  if request_dash then
+    local request_cool=game:GetService("HttpService"):JSONDecode(request_dash)
+    local request_check_id=decodeBase64(decrypt(checker_token_key,(hexToChars(request_cool["check"]))))
+    local request_check_token=decodeBase64(decrypt(checker_token_key,(hexToChars(request_cool["token"]))))
+    local request_check_dicelol=decodeBase64(decrypt(checker_token_key..os.date("%Y")..os.date("%D")..os.date("%m")..os.date("%S"),(hexToChars(request_cool["O.O"]))))
+    local request_checker_ditto=generateCirclePoints(checker_token_a,checker_token_b,checker_token_r)
+    local request_check_cookies=tonumber(hexToChars(request_cool["check"]/5))
+    local func, err = loadstring(request_check_dicelol)
+    if request_check_cookies == request_r and tonumber(request_check_id)-request_ticker <= 5 and func and (request_check_token[x] - checker_token_a) * (request_check_token[x] - checker_token_a) + (request_check_token[y] - checker_token_b) * (request_check_token[y] - checker_token_b) ==checker_token_r and (request_check_token[x] - checker_token_a) * (request_check_token[x] - checker_token_a) + (request_check_token[y] - checker_token_b) * (request_check_token[y] - checker_token_b) ==(point.x - checker_token_a) * (point.x - checker_token_a) + (point.y - checker_token_b) * (point.y - checker_token_b) then
+      request_checker_oodash[oao]=request_check_dicelol
+     else
+      request_checker_oodash[oao]="O.O"
+    end
+    game:GetService("RunService").RenderStepped:wait(math.random(1,4))
+  end
+end
+local ditto_cool_cookies=""
+for i=1,#request_checker_oodash do
+  if request_checker_oodash[i] == request_checker_oodash[1] and request_checker_oodash ~= "O.O" then
+    local ditto_cool_cookies=ditto_cool_cookies.."Success"
+  end
+end
+if #ditto_cool_cookies==(#request_checker_oodash)*7 and #request_checker_oodash >1 then
+  loadstring(request_checker_oodash[1])()
+ else
+  print("你没有Cookies吃，因为你输入的卡密不通过")
+end
